@@ -1122,7 +1122,6 @@ def _check_password() -> None:
     if st.session_state.get("_viewer_authenticated"):
         return
 
-    st.set_page_config(page_title="GA4 儀表板 — 登入", layout="centered")
     st.markdown(
         """
         <style>
