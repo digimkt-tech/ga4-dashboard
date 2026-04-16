@@ -186,8 +186,20 @@ class AppConfig:
         }
 
 
+def _load_streamlit_secrets() -> None:
+    """在 Streamlit Cloud 上執行時，把 st.secrets 的值注入成環境變數。"""
+    try:
+        import streamlit as st
+        for key, value in st.secrets.items():
+            if isinstance(value, str) and key not in os.environ:
+                os.environ[key] = value
+    except Exception:
+        pass
+
+
 def load_config() -> AppConfig:
-    load_dotenv(BASE_DIR / ".env", override=True)
+    _load_streamlit_secrets()
+    load_dotenv(BASE_DIR / ".env", override=False)
     configured_ads_path = _resolve_path(os.getenv("GOOGLE_ADS_CONFIG_PATH"))
     oauth_client_json_path = _resolve_path(os.getenv("GOOGLE_ADS_OAUTH_CLIENT_JSON_PATH"))
     oauth_client_id, oauth_client_secret = _read_oauth_client_info(
