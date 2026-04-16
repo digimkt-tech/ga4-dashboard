@@ -1,0 +1,11 @@
+streamlit>=1.44.0
+plotly>=6.0.0
+pandas>=2.2.0
+python-dotenv>=1.0.0
+google-analytics-data>=0.18.0
+google-ads>=28.0.0
+google-auth>=2.35.0
+google-auth-oauthlib>=1.2.0
+google-api-python-client>=2.100.0
+PyYAML>=6.0.0
+requests>=2.32.0
