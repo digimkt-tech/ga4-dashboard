@@ -1189,64 +1189,63 @@ def main() -> None:
         dashboard_error = st.session_state.get("dashboard_error", "")
         if dashboard_error:
             st.error(dashboard_error)
-            st.stop()
+            st.info("請切換到「設定精靈」分頁補齊憑證設定。")
 
-        if not payload:
+        elif not payload:
             st.info("請先從左側載入資料。")
-            st.stop()
 
-        sel_domain = st.session_state.get("domain_filter", "全部網域 (All)")
-        if sel_domain != "全部網域 (All)":
-            import copy
-            payload = copy.copy(payload)
-            if "domain" in payload["ga4"].columns and not payload["ga4"].empty:
-                payload["ga4"] = payload["ga4"][payload["ga4"]["domain"] == sel_domain]
-            if "domain" in payload["gsc_daily"].columns and not payload["gsc_daily"].empty:
-                payload["gsc_daily"] = payload["gsc_daily"][payload["gsc_daily"]["domain"] == sel_domain]
-            if "domain" in payload["gsc_queries"].columns and not payload["gsc_queries"].empty:
-                payload["gsc_queries"] = payload["gsc_queries"][payload["gsc_queries"]["domain"] == sel_domain]
-            from data_processor import merge_ga4_and_ads
-            payload["merged"] = merge_ga4_and_ads(payload["ga4"], payload["ads"])
+        else:
+            sel_domain = st.session_state.get("domain_filter", "全部網域 (All)")
+            if sel_domain != "全部網域 (All)":
+                import copy
+                payload = copy.copy(payload)
+                if "domain" in payload["ga4"].columns and not payload["ga4"].empty:
+                    payload["ga4"] = payload["ga4"][payload["ga4"]["domain"] == sel_domain]
+                if "domain" in payload["gsc_daily"].columns and not payload["gsc_daily"].empty:
+                    payload["gsc_daily"] = payload["gsc_daily"][payload["gsc_daily"]["domain"] == sel_domain]
+                if "domain" in payload["gsc_queries"].columns and not payload["gsc_queries"].empty:
+                    payload["gsc_queries"] = payload["gsc_queries"][payload["gsc_queries"]["domain"] == sel_domain]
+                from data_processor import merge_ga4_and_ads
+                payload["merged"] = merge_ga4_and_ads(payload["ga4"], payload["ads"])
 
-        for message in payload["messages"]:
-            if payload["mode"] == "demo":
-                st.info(message)
-            else:
-                st.warning(message)
+            for message in payload["messages"]:
+                if payload["mode"] == "demo":
+                    st.info(message)
+                else:
+                    st.warning(message)
 
-        merged_frame = payload["merged"]
-        summary = summarize_dashboard(merged_frame)
+            merged_frame = payload["merged"]
+            summary = summarize_dashboard(merged_frame)
 
-        render_metrics(summary)
-        
-        if sel_domain == "全部網域 (All)":
-            render_portfolio_summary(payload)
+            render_metrics(summary)
 
-        render_charts(merged_frame, top_n=top_n, theme_type=theme_type)
-        render_table(merged_frame, top_n=top_n)
+            if sel_domain == "全部網域 (All)":
+                render_portfolio_summary(payload)
 
-    
-        if "gsc_queries" in payload and not payload["gsc_queries"].empty:
-            st.markdown("## 自然搜尋排名 (GSC Top Queries)")
-            gsc_q = payload["gsc_queries"].rename(columns={
-                "query": "搜尋字詞",
-                "gsc_clicks": "自然搜尋點擊",
-                "gsc_impressions": "曝光次數",
-                "gsc_ctr": "點擊率 (CTR)",
-                "gsc_position": "平均排名"
-            })
-            gsc_q["點擊率 (CTR)"] = (gsc_q["點擊率 (CTR)"] * 100).round(2).astype(str) + "%"
-            gsc_q["平均排名"] = gsc_q["平均排名"].round(1)
-            st.dataframe(gsc_q, use_container_width=True, hide_index=True)
+            render_charts(merged_frame, top_n=top_n, theme_type=theme_type)
+            render_table(merged_frame, top_n=top_n)
 
-        with st.expander("檢視原始 API 資料表", expanded=False):
-            raw_columns = st.columns(3)
-            raw_columns[0].markdown("### GA4")
-            raw_columns[0].dataframe(payload["ga4"], use_container_width=True)
-            raw_columns[1].markdown("### Google Ads")
-            raw_columns[1].dataframe(payload["ads"], use_container_width=True)
-            raw_columns[2].markdown("### Google Search Console")
-            raw_columns[2].dataframe(payload.get("gsc_daily", pd.DataFrame()), use_container_width=True)
+            if "gsc_queries" in payload and not payload["gsc_queries"].empty:
+                st.markdown("## 自然搜尋排名 (GSC Top Queries)")
+                gsc_q = payload["gsc_queries"].rename(columns={
+                    "query": "搜尋字詞",
+                    "gsc_clicks": "自然搜尋點擊",
+                    "gsc_impressions": "曝光次數",
+                    "gsc_ctr": "點擊率 (CTR)",
+                    "gsc_position": "平均排名"
+                })
+                gsc_q["點擊率 (CTR)"] = (gsc_q["點擊率 (CTR)"] * 100).round(2).astype(str) + "%"
+                gsc_q["平均排名"] = gsc_q["平均排名"].round(1)
+                st.dataframe(gsc_q, use_container_width=True, hide_index=True)
+
+            with st.expander("檢視原始 API 資料表", expanded=False):
+                raw_columns = st.columns(3)
+                raw_columns[0].markdown("### GA4")
+                raw_columns[0].dataframe(payload["ga4"], use_container_width=True)
+                raw_columns[1].markdown("### Google Ads")
+                raw_columns[1].dataframe(payload["ads"], use_container_width=True)
+                raw_columns[2].markdown("### Google Search Console")
+                raw_columns[2].dataframe(payload.get("gsc_daily", pd.DataFrame()), use_container_width=True)
 
     with setup_tab:
         render_setup_wizard(config)
